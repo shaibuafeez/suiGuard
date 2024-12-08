@@ -1,0 +1,8 @@
+flask==2.0.1
+requests==2.26.0
+python-dotenv==0.19.0
+google-generativeai==0.3.1
+aiohttp==3.7.4
+beautifulsoup4==4.9.3
+cryptography==3.4.7
+python-whois==0.8.0

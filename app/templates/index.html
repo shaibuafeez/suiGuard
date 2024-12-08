@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuiGuard - URL Security Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-light: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        }
+
+        body {
+            transition: background 0.3s ease;
+        }
+
+        body[data-bs-theme="light"] {
+            background: var(--bg-gradient-light);
+        }
+
+        body[data-bs-theme="dark"] {
+            background: var(--bg-gradient-dark);
+            color: #e0e0e0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        body[data-bs-theme="light"] .theme-toggle {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        body[data-bs-theme="dark"] .theme-toggle {
+            background: #2d3436;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .card {
+            transition: all 0.3s ease;
+        }
+
+        body[data-bs-theme="dark"] .card {
+            background: #2d3436;
+            border-color: #373737;
+        }
+
+        body[data-bs-theme="dark"] .card.bg-light {
+            background: #373737 !important;
+        }
+
+        body[data-bs-theme="dark"] .text-muted {
+            color: #a0a0a0 !important;
+        }
+
+        .container {
+            padding-top: 50px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+
+        body[data-bs-theme="dark"] .card-header {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+            border-bottom: 1px solid #404040;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 2px solid #eee;
+        }
+
+        body[data-bs-theme="dark"] .form-control {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .form-control:focus {
+            background-color: #373d3f;
+            border-color: #4a4a4a;
+            color: #e0e0e0;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-analyze {
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+
+        body[data-bs-theme="dark"] .btn-analyze {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            margin-top: 20px;
+            display: none;
+        }
+
+        body[data-bs-theme="dark"] .result-card {
+            background-color: #2d3436;
+            border: 1px solid #404040;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+        }
+
+        body[data-bs-theme="dark"] .score-circle {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .api-result {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+
+        body[data-bs-theme="dark"] .api-result {
+            background: #2d3436;
+            border: 1px solid #404040;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+        }
+
+        body[data-bs-theme="dark"] .loading-spinner {
+            border-color: #404040;
+            border-top-color: #7dcfff;
+        }
+
+        .risk-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge {
+            border: 1px solid #404040;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.low {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.medium {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffd866;
+        }
+
+        body[data-bs-theme="dark"] .risk-badge.high {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #ff6188;
+        }
+
+        body[data-bs-theme="dark"] .alert {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .alert-warning {
+            background-color: rgba(255, 193, 7, 0.15);
+            border-color: #856404;
+            color: #ffd866;
+        }
+
+        body[data-bs-theme="dark"] .alert-info {
+            background-color: rgba(23, 162, 184, 0.15);
+            border-color: #0c5460;
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] .alert-success {
+            background-color: rgba(40, 167, 69, 0.15);
+            border-color: #155724;
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .progress {
+            background-color: #404040;
+        }
+
+        body[data-bs-theme="dark"] a {
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] a:hover {
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] .alert-link {
+            color: #7dcfff;
+        }
+
+        body[data-bs-theme="dark"] .alert-link:hover {
+            color: #a9dc76;
+        }
+
+        body[data-bs-theme="dark"] table {
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body[data-bs-theme="dark"] .list-group-item {
+            background-color: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        body[data-bs-theme="dark"] .fas,
+        body[data-bs-theme="dark"] .far,
+        body[data-bs-theme="dark"] .fab {
+            color: inherit;
+        }
+
+        /* Submission Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+        }
+
+        body[data-bs-theme="dark"] .modal-content {
+            background: #2d3436;
+            color: #e0e0e0;
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+
+        body[data-bs-theme="dark"] .modal-header {
+            border-bottom: 1px solid #404040;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 1.5rem;
+        }
+
+        body[data-bs-theme="dark"] .modal-footer {
+            border-top: 1px solid #404040;
+        }
+
+        .submit-suspicious-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .submit-suspicious-btn {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .submit-suspicious-btn i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+
+        .submit-suspicious-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        body[data-bs-theme="dark"] .submit-suspicious-btn {
+            background: linear-gradient(45deg, #2b3595, #7c3085);
+        }
+
+        .submit-tooltip {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .submit-suspicious-container:hover .submit-tooltip {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .submit-suspicious-container {
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
+            
+            .submit-suspicious-btn {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Pulse animation for the button */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(65, 88, 208, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(65, 88, 208, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(65, 88, 208, 0);
+            }
+        }
+
+        .submit-suspicious-btn {
+            animation: pulse 2s infinite;
+        }
+
+        body[data-bs-theme="dark"] .submit-suspicious-btn {
+            animation: none; /* Disable pulse in dark mode for less distraction */
+        }
+
+        /* Enhanced modal styles */
+        .modal-header .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .modal-header .modal-title i {
+            color: #c850c0;
+        }
+
+        body[data-bs-theme="dark"] .modal-header .modal-title i {
+            color: #7c3085;
+        }
+
+        .floating-label-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .floating-label-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        body[data-bs-theme="dark"] .floating-label-group label {
+            color: #a0a0a0;
+        }
+
+        .floating-label-group i {
+            font-size: 0.9rem;
+        }
+
+        .url-input-group {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        body[data-bs-theme="dark"] .url-input-group {
+            background: #2d3436;
+            border-color: #404040;
+        }
+
+        .url-input-group i {
+            padding: 0.8rem;
+            color: #666;
+        }
+
+        body[data-bs-theme="dark"] .url-input-group i {
+            color: #a0a0a0;
+        }
+
+        /* AI Assistant Styles */
+        .ai-assistant-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        body[data-bs-theme="dark"] .ai-assistant-btn {
+            background: linear-gradient(45deg, #0f8a7d, #32d76f);
+        }
+
+        .ai-assistant-btn i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+
+        .ai-assistant-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(0,0,0,0.03);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        body[data-bs-theme="dark"] .chat-container {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            max-width: 85%;
+        }
+
+        .user-message {
+            background: linear-gradient(45deg, #4158d0, #c850c0);
+            color: white;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background: white;
+            border: 1px solid #ddd;
+            margin-right: auto;
+        }
+
+        body[data-bs-theme="dark"] .assistant-message {
+            background: #2d3436;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.05);
+            margin-bottom: 1rem;
+        }
+
+        body[data-bs-theme="dark"] .typing-indicator {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #666;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing 1s infinite;
+        }
+
+        body[data-bs-theme="dark"] .typing-indicator span {
+            background: #a0a0a0;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Chat Button */
+        .chat-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+        }
+
+        .chat-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: white;
+        }
+
+        /* Chat Modal */
+        .chat-modal {
+            display: none;
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 380px;
+            max-width: 95vw;
+            height: 600px;
+            max-height: 80vh;
+            background: var(--bg-color);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .security-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-chat svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            line-height: 1.4;
+            animation: messageAppear 0.3s ease;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .assistant-message {
+            align-self: flex-start;
+            background: var(--message-bg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-color);
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            resize: none;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-family: inherit;
+            line-height: 1.4;
+            max-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        #chat-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        #send-message {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        #send-message svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        #send-message:hover {
+            transform: scale(1.05);
+        }
+
+        /* Animations */
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dark Mode Support */
+        [data-theme='dark'] .chat-modal {
+            --bg-color: #1a1b1e;
+            --text-color: #e5e7eb;
+            --border-color: #2d2f34;
+            --message-bg: #2d2f34;
+            --input-bg: #2d2f34;
+        }
+
+        [data-theme='light'] .chat-modal {
+            --bg-color: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --message-bg: #f3f4f6;
+            --input-bg: #ffffff;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            background: var(--message-bg);
+            border-radius: 1rem;
+            width: fit-content;
+            margin-top: 0.5rem;
+        }
+
+        .typing-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #6366f1;
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Message Content Styling */
+        .chat-message .message-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .chat-message .message-content h1,
+        .chat-message .message-content h2,
+        .chat-message .message-content h3 {
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+
+        .chat-message .message-content ul,
+        .chat-message .message-content ol {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
+
+        .chat-message .message-content li {
+            margin: 0.25em 0;
+        }
+
+        .chat-message .message-content p {
+            margin: 0.5em 0;
+        }
+
+        .chat-message .message-content strong {
+            color: inherit;
+        }
+
+        /* Assistant Message Specific Styling */
+        .assistant-message .message-content {
+            color: var(--text-color);
+        }
+
+        .assistant-message .message-content strong {
+            color: #4f46e5;
+        }
+
+        .assistant-message .message-content ul li::marker {
+            color: #4f46e5;
+        }
+
+        /* Dark Mode Adjustments */
+        [data-theme='dark'] .assistant-message .message-content strong {
+            color: #818cf8;
+        }
+    </style>
+</head>
+<body data-bs-theme="light">
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <button class="ai-assistant-btn" data-bs-toggle="modal" data-bs-target="#assistantModal">
+        <i class="fas fa-robot"></i>
+        Ask AI Assistant
+    </button>
+
+    <div class="submit-suspicious-container">
+        <button class="submit-suspicious-btn" data-bs-toggle="modal" data-bs-target="#submitModal">
+            <i class="fas fa-exclamation-triangle"></i>
+            Report Suspicious URL
+        </button>
+        <div class="submit-tooltip">Help protect others by reporting suspicious URLs</div>
+    </div>
+
+    <!-- AI Assistant Modal -->
+    <div class="modal fade" id="assistantModal" tabindex="-1" aria-labelledby="assistantModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assistantModalLabel">
+                        <i class="fas fa-robot me-2"></i>
+                        SuiGuard Assistant
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message assistant-message">
+                            Hello! I'm your AI security assistant. How can I help you understand the URL analysis results?
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userQuestion" 
+                               placeholder="Ask about the URL analysis or security concerns...">
+                        <button class="btn btn-analyze" id="askButton">
+                            <i class="fas fa-paper-plane"></i>
+                            Ask
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="submitModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Report Suspicious URL
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="submitForm">
+                        <div class="floating-label-group">
+                            <label>
+                                <i class="fas fa-link"></i>
+                                Suspicious URL
+                            </label>
+                            <div class="url-input-group">
+                                <i class="fas fa-globe"></i>
+                                <input type="url" class="form-control border-0" id="suspiciousUrl" 
+                                    placeholder="Enter the suspicious URL here..." required>
+                            </div>
+                        </div>
+                        <div class="floating-label-group">
+                            <label>
+                                <i class="fas fa-comment-alt"></i>
+                                Why is this URL suspicious? (Optional)
+                            </label>
+                            <textarea class="form-control" id="description" 
+                                placeholder="e.g., 'Received in a suspicious email', 'Asks for sensitive information', etc."></textarea>
+                        </div>
+                    </div>
+                    <div class="success-animation" id="successMessage">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>Thank You for Your Report!</h4>
+                        <p>Together we're making the internet safer for everyone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-analyze" id="submitSuspiciousBtn">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2><i class="fas fa-shield-alt"></i> SuiGuard</h2>
+                        <p class="mb-0">Intelligent URL Security Analysis</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="urlForm" class="mb-4">
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="urlInput" placeholder="Enter URL to analyze" required>
+                                <button type="submit" class="btn btn-analyze text-white">
+                                    <i class="fas fa-search"></i> Analyze
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="loading" class="loading">
+                            <div class="spinner-border text-primary loading-spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Analyzing URL security...</p>
+                        </div>
+
+                        <div id="results" class="result-card">
+                            <div class="text-center mb-4">
+                                <div id="scoreCircle" class="score-circle">
+                                    <span id="riskScore">-</span>
+                                </div>
+                                <h4 class="mt-2">Risk Assessment</h4>
+                                <span id="riskBadge" class="risk-badge"></span>
+                            </div>
+
+                            <div id="riskFactors" class="mb-4">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Risk Factors</h5>
+                                <ul class="list-group" id="riskFactorsList">
+                                </ul>
+                            </div>
+
+                            <div class="api-results">
+                                <div id="vtResult" class="api-result">
+                                    <h5><i class="fas fa-virus-slash"></i> VirusTotal Analysis</h5>
+                                    <div id="vtContent"></div>
+                                </div>
+
+                                <div id="gsbResult" class="api-result">
+                                    <h5><i class="fab fa-google"></i> Google Safe Browsing</h5>
+                                    <div id="gsbContent"></div>
+                                </div>
+
+                                <div id="urlscanResult" class="api-result">
+                                    <h5><i class="fas fa-search"></i> URLScan.io</h5>
+                                    <div id="urlscanContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.querySelector('.theme-toggle i');
+            const currentTheme = body.getAttribute('data-bs-theme');
+            const html = document.documentElement;
+            
+            if (currentTheme === 'light') {
+                body.setAttribute('data-bs-theme', 'dark');
+                html.setAttribute('data-bs-theme', 'dark');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.setAttribute('data-bs-theme', 'light');
+                html.setAttribute('data-bs-theme', 'light');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const html = document.documentElement;
+            const icon = document.querySelector('.theme-toggle i');
+            
+            if (savedTheme === 'dark') {
+                body.setAttribute('data-bs-theme', 'dark');
+                html.setAttribute('data-bs-theme', 'dark');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        });
+
+        document.getElementById('urlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('urlInput').value;
+            
+            // Show loading, hide results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while analyzing the URL');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Display risk score
+            const score = data.risk_score;
+            document.getElementById('riskScore').textContent = score;
+            
+            // Set score circle color
+            const scoreCircle = document.getElementById('scoreCircle');
+            let color;
+            let riskLevel;
+            if (score < 30) {
+                color = '#28a745';
+                riskLevel = 'Low Risk';
+            } else if (score < 70) {
+                color = '#ffc107';
+                riskLevel = 'Medium Risk';
+            } else {
+                color = '#dc3545';
+                riskLevel = 'High Risk';
+            }
+            scoreCircle.style.background = color;
+            
+            // Set risk badge
+            const riskBadge = document.getElementById('riskBadge');
+            riskBadge.textContent = riskLevel;
+            riskBadge.style.background = color;
+            riskBadge.style.color = 'white';
+            
+            // Display risk factors
+            const riskFactorsList = document.getElementById('riskFactorsList');
+            riskFactorsList.innerHTML = '';
+            if (data.risk_factors && data.risk_factors.length > 0) {
+                data.risk_factors.forEach(factor => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> ${factor}`;
+                    riskFactorsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = '<i class="fas fa-check-circle text-success"></i> No significant risk factors detected';
+                riskFactorsList.appendChild(li);
+            }
+            
+            // Display VirusTotal results
+            const vtContent = document.getElementById('vtContent');
+            if (data.virustotal.error) {
+                vtContent.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.virustotal.error}
+                </div>`;
+            } else {
+                vtContent.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <div>Malicious: <span class="text-danger">${data.virustotal.malicious}</span></div>
+                        <div>Suspicious: <span class="text-warning">${data.virustotal.suspicious}</span></div>
+                        <div>Clean: <span class="text-success">${data.virustotal.clean}</span></div>
+                    </div>
+                `;
+            }
+            
+            // Display Google Safe Browsing results
+            const gsbContent = document.getElementById('gsbContent');
+            if (data.google_safe_browsing.error) {
+                gsbContent.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.google_safe_browsing.error}
+                </div>`;
+            } else {
+                const threatsFound = data.google_safe_browsing.threats_found;
+                gsbContent.innerHTML = threatsFound > 0 ?
+                    `<div class="alert alert-danger">Detected ${threatsFound} threat(s)</div>` :
+                    '<div class="alert alert-success">No threats detected</div>';
+            }
+            
+            // Display URLScan results
+            const urlscanContent = document.getElementById('urlscanContent');
+            if (data.urlscan.error) {
+                urlscanContent.innerHTML = `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3 text-secondary"></i>
+                                <div>
+                                    <h5 class="mb-0">Analysis Error</h5>
+                                    <small class="text-muted">${data.urlscan.error}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                let content = '';
+                switch (data.urlscan.status) {
+                    case 'existing':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-history fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h5 class="mb-0">Previous Scan Found</h5>
+                                            <small class="text-muted">This URL has been analyzed before</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <h6><i class="fas fa-info-circle"></i> Scan Details</h6>
+                                                <ul class="list-unstyled ps-3">
+                                                    <li><i class="fas fa-check-circle text-success"></i> Analysis available</li>
+                                                    <li><i class="fas fa-clock text-info"></i> Quick result retrieval</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <a href="${data.urlscan.result_url}" target="_blank" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-external-link-alt"></i> View Detailed Report
+                                            </a>
+                                        </div>
+                                        ${data.urlscan.screenshot ? `
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-header py-2">
+                                                        <small><i class="fas fa-camera"></i> Website Screenshot</small>
+                                                    </div>
+                                                    <div class="card-body p-2">
+                                                        <img src="${data.urlscan.screenshot}" 
+                                                             alt="Website Screenshot" 
+                                                             class="img-fluid rounded">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'known':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-shield-alt fa-2x me-3 text-success"></i>
+                                        <div>
+                                            <h5 class="mb-0">Known Website</h5>
+                                            <small class="text-muted">${data.urlscan.message}</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card bg-light h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-globe"></i> Domain Information
+                                                    </h6>
+                                                    <p class="card-text">
+                                                        <strong>Domain:</strong> ${data.urlscan.domain_info.domain}<br>
+                                                        <strong>Previous Scans:</strong> ${data.urlscan.domain_info.total_scans}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-chart-bar"></i> Reputation
+                                                    </h6>
+                                                    <div class="text-success">
+                                                        <i class="fas fa-check-circle"></i> Established Domain
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'blocked':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-shield-alt fa-2x me-3 text-info"></i>
+                                        <div>
+                                            <h5 class="mb-0">Protected Website</h5>
+                                            <small class="text-muted">This appears to be a legitimate website</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info border-0 mb-0">
+                                        <i class="fas fa-info-circle"></i> ${data.urlscan.message}<br>
+                                        <small class="text-muted">${data.urlscan.description}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'submitted':
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-search fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h5 class="mb-0">New Scan Initiated</h5>
+                                            <small class="text-muted">Analysis in progress</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: 100%"></div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> Scan submitted successfully
+                                        </small>
+                                        <a href="${data.urlscan.result_url}" target="_blank" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-external-link-alt"></i> View Results
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    default:
+                        content = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle fa-2x me-3 text-secondary"></i>
+                                        <div>
+                                            <h5 class="mb-0">Status Update</h5>
+                                            <small class="text-muted">Current status: ${data.urlscan.status}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                }
+                urlscanContent.innerHTML = content;
+            }
+        }
+
+        document.getElementById('submitSuspiciousBtn').addEventListener('click', async () => {
+            const url = document.getElementById('suspiciousUrl').value;
+            const description = document.getElementById('description').value;
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            try {
+                const response = await fetch('/submit-suspicious', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, description })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('submitForm').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Reset form
+                    document.getElementById('suspiciousUrl').value = '';
+                    document.getElementById('description').value = '';
+                    
+                    // Auto close after 3 seconds
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('submitModal'));
+                        modal.hide();
+                        // Reset the form view after modal is closed
+                        setTimeout(() => {
+                            document.getElementById('submitForm').style.display = 'block';
+                            document.getElementById('successMessage').style.display = 'none';
+                        }, 300);
+                    }, 3000);
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+
+        let currentScanResults = {};
+
+        async function askAssistant(question) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            const chatContainer = document.getElementById('chatContainer');
+            
+            // Add user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user-message';
+            userMessageDiv.textContent = question;
+            chatContainer.appendChild(userMessageDiv);
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            try {
+                const response = await fetch('/ask-assistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        url: document.getElementById('urlInput').value,
+                        scanResults: currentScanResults || {}
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Add response or error message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message assistant-message';
+                
+                if (data.status === 'success') {
+                    // Create a container for the formatted content
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    // Convert markdown to HTML and set it
+                    contentDiv.innerHTML = marked.parse(data.response);
+                    messageDiv.appendChild(contentDiv);
+                } else {
+                    messageDiv.classList.add('text-danger');
+                    messageDiv.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${data.error || 'An error occurred while processing your request.'}
+                            ${data.details ? `<br><small class="text-muted">${data.details}</small>` : ''}
+                        </div>
+                    `;
+                }
+                
+                chatContainer.appendChild(messageDiv);
+                
+            } catch (error) {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'chat-message assistant-message text-danger';
+                errorDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Network error occurred. Please check your connection and try again.
+                    </div>
+                `;
+                chatContainer.appendChild(errorDiv);
+                console.error('Chat Error:', error);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Configure marked options
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false
+        });
+
+        // Event listeners for the chat
+        document.getElementById('askButton').addEventListener('click', () => {
+            const question = document.getElementById('userQuestion').value.trim();
+            if (question) {
+                askAssistant(question);
+                document.getElementById('userQuestion').value = '';
+            }
+        });
+
+        document.getElementById('userQuestion').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const question = e.target.value.trim();
+                if (question) {
+                    askAssistant(question);
+                    e.target.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
