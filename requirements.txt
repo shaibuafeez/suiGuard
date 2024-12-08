@@ -6,3 +6,6 @@ aiohttp==3.7.4
 beautifulsoup4==4.9.3
 cryptography==3.4.7
 python-whois==0.8.0
+flask-cors==4.0.0
+gunicorn==20.1.0
+werkzeug==2.0.1

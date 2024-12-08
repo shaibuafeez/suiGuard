@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import requests
@@ -9,12 +10,20 @@ from urllib.parse import urlparse
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
+# Initialize Flask app
+app = Flask(__name__, 
+    static_folder='app/static',
+    template_folder='app/templates'
+)
+
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__, 
-           template_folder='app/templates',
-           static_folder='app/static')
+# Enable CORS
+CORS(app)
+
+# Initialize API service
+# api_service = SecurityAPIService()  # This line is commented out because SecurityAPIService is not defined in the provided code
 
 def check_virustotal(url):
     api_key = os.getenv('VIRUS_TOTAL_API_KEY')
@@ -206,20 +215,17 @@ def check_urlscan(url):
 def init_gemini():
     genai.configure(api_key=os.getenv('GOOGLE_GEMINI_API_KEY'))
     
-    # Configure the model
     generation_config = {
         "temperature": 0.9,
         "top_p": 0.95,
         "top_k": 40,
         "max_output_tokens": 8192,
     }
-
-    # Create the model
+    
     model = genai.GenerativeModel(
         model_name="gemini-pro",
         generation_config=generation_config
     )
-    
     return model
 
 @app.route('/')
@@ -355,5 +361,7 @@ Keep the response concise and user-friendly."""
             'details': str(e)
         }), 500
 
+app = app
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
